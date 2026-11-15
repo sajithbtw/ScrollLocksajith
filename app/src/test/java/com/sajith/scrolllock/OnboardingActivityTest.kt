@@ -33,20 +33,24 @@ class OnboardingActivityTest {
         assertEquals(0f, none.progressFraction, 0.001f)
 
         val partial = OnboardingPermissionsState(
+            accessibilityGranted = true,
+            overlayGranted = true,
             cameraGranted = true,
-            usageAccessGranted = true,
+            usageAccessGranted = false,
             dndPolicyGranted = false
         )
-        assertEquals(2, partial.coreGrantedCount)
+        assertEquals(3, partial.coreGrantedCount)
         assertFalse(partial.allCoreGranted)
-        assertEquals(2f / 3f, partial.progressFraction, 0.001f)
+        assertEquals(3f / 5f, partial.progressFraction, 0.001f)
 
         val all = OnboardingPermissionsState(
+            accessibilityGranted = true,
+            overlayGranted = true,
             cameraGranted = true,
             usageAccessGranted = true,
             dndPolicyGranted = true
         )
-        assertEquals(3, all.coreGrantedCount)
+        assertEquals(5, all.coreGrantedCount)
         assertTrue(all.allCoreGranted)
         assertEquals(1f, all.progressFraction, 0.001f)
     }
@@ -62,6 +66,14 @@ class OnboardingActivityTest {
         ).setup()
         val activity = controller.get()
         val shadowActivity = Shadows.shadowOf(activity)
+
+        PermissionHelper.openAccessibilitySettings(activity)
+        val a11yIntent = shadowActivity.nextStartedActivity
+        assertEquals(Settings.ACTION_ACCESSIBILITY_SETTINGS, a11yIntent.action)
+
+        PermissionHelper.openOverlaySettings(activity)
+        val overlayIntent = shadowActivity.nextStartedActivity
+        assertEquals(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, overlayIntent.action)
 
         PermissionHelper.openUsageAccessSettings(activity)
         val usageIntent = shadowActivity.nextStartedActivity

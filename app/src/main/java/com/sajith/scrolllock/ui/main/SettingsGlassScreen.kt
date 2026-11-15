@@ -61,6 +61,8 @@ fun SettingsGlassScreen(
     onToggleAlwaysGuard: (Boolean) -> Unit,
     onToggleWorkoutUnlock: (Boolean) -> Unit,
     onOpenUsageSettings: () -> Unit,
+    onOpenAccessibilitySettings: () -> Unit,
+    onOpenOverlaySettings: () -> Unit,
     onOpenDndSettings: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     onOpenAppSettings: () -> Unit,
@@ -82,7 +84,9 @@ fun SettingsGlassScreen(
         GlassCard(cornerRadius = 22.dp) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Permissions & System Access", style = MaterialTheme.typography.titleMedium, color = GlassColors.TextPrimary)
-                PermissionRow("Usage Access (App & Reels Guard)", state.hasUsageAccess, onOpenUsageSettings)
+                PermissionRow("Accessibility Guard (App & Reels Blocker)", state.hasAccessibility, onOpenAccessibilitySettings)
+                PermissionRow("Display Over Other Apps (Instant Lock Screen)", state.hasOverlay, onOpenOverlaySettings)
+                PermissionRow("Usage Access (Screen Time & Monitor)", state.hasUsageAccess, onOpenUsageSettings)
                 PermissionRow("Do Not Disturb (Hide Previews)", state.hasDndAccess, onOpenDndSettings)
                 PermissionRow("Notifications (Alarms & Nudges)", state.hasNotificationPerm, onOpenNotificationSettings)
                 PermissionRow("Camera (Study Pages & Pose AI)", state.hasCameraPerm, onOpenAppSettings)
@@ -248,9 +252,9 @@ fun SettingsGlassScreen(
             ) {
                 Icon(Icons.Rounded.Shield, null, tint = GlassColors.MintVerified, modifier = Modifier.size(22.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Play Protect & Privacy Guarantee", style = MaterialTheme.typography.titleMedium, color = GlassColors.TextPrimary)
+                    Text("100% On-Device Privacy Guarantee", style = MaterialTheme.typography.titleMedium, color = GlassColors.TextPrimary)
                     Text(
-                        text = "All page detection, ML Kit pose tracking, alarms, and usage analytics stay 100% on-device. ScrollLock never uses Accessibility snooping, background VPN interception, or restricted exact-alarm permissions.",
+                        text = "Accessibility Guard inspects only selected short-form video player/tab IDs (skipping all passwords) to block Reels/Shorts & locked apps. Deep Focus uses a strictly local loopback VPN tunnel to pause distracting network apps with zero remote servers, zero telemetry, and zero cloud uploads.",
                         style = MaterialTheme.typography.labelSmall,
                         color = GlassColors.TextSecondary
                     )

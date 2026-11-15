@@ -132,7 +132,7 @@ class TaskAndAlarmTest {
     }
 
     @Test
-    fun manifest_hasZeroProhibitedExactAlarmOrPlayProtectPermissions() {
+    fun manifest_hasZeroProhibitedExactAlarmOrBroadInventoryPermissions() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val pm = context.packageManager
         val pkgInfo: PackageInfo = pm.getPackageInfo(
@@ -143,9 +143,8 @@ class TaskAndAlarmTest {
         val perms = pkgInfo.requestedPermissions?.toSet().orEmpty()
         assertFalse(perms.contains("android.permission.USE_EXACT_ALARM"))
         assertFalse(perms.contains("android.permission.SCHEDULE_EXACT_ALARM"))
-        assertFalse(perms.contains("android.permission.BIND_ACCESSIBILITY_SERVICE"))
-        assertFalse(perms.contains("android.permission.BIND_VPN_SERVICE"))
         assertFalse(perms.contains("android.permission.QUERY_ALL_PACKAGES"))
-        assertFalse(perms.contains("android.permission.SYSTEM_ALERT_WINDOW"))
+        assertFalse(perms.contains("android.permission.READ_EXTERNAL_STORAGE"))
+        assertTrue(perms.contains("android.permission.SYSTEM_ALERT_WINDOW"))
     }
 }

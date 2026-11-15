@@ -45,7 +45,9 @@ import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.outlined.BatteryChargingFull
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.DoNotDisturbOn
+import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.QueryStats
+import androidx.compose.material.icons.rounded.AccessibilityNew
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
@@ -106,6 +108,8 @@ import kotlinx.coroutines.flow.update
  * Pure state model representing permission readiness during Onboarding.
  */
 data class OnboardingPermissionsState(
+    val accessibilityGranted: Boolean = false,
+    val overlayGranted: Boolean = false,
     val cameraGranted: Boolean = false,
     val usageAccessGranted: Boolean = false,
     val dndPolicyGranted: Boolean = false,
@@ -114,13 +118,19 @@ data class OnboardingPermissionsState(
     val reelsBlockedCount: Int = 0
 ) {
     val coreGrantedCount: Int
-        get() = listOf(cameraGranted, usageAccessGranted, dndPolicyGranted).count { it }
+        get() = listOf(
+            accessibilityGranted,
+            overlayGranted,
+            cameraGranted,
+            usageAccessGranted,
+            dndPolicyGranted
+        ).count { it }
 
     val allCoreGranted: Boolean
-        get() = cameraGranted && usageAccessGranted && dndPolicyGranted
+        get() = accessibilityGranted && overlayGranted && cameraGranted && usageAccessGranted && dndPolicyGranted
 
     val progressFraction: Float
-        get() = coreGrantedCount / 3f
+        get() = coreGrantedCount / 5f
 }
 
 /**
@@ -188,6 +198,15 @@ class OnboardingActivity : ComponentActivity() {
 
                 OnboardingScreen(
                     state = state,
+                    onOpenAccessibilitySettings = {
+                        PermissionHelper.openAccessibilitySettings(this)
+                    },
+                    onOpenAppInfoForRestrictedSettings = {
+                        PermissionHelper.openAppDetailsSettings(this)
+                    },
+                    onOpenOverlaySettings = {
+                        PermissionHelper.openOverlaySettings(this)
+                    },
                     onRequestCamera = {
                         if (PermissionHelper.hasCameraPermission(this)) {
                             PermissionHelper.openAppDetailsSettings(this)
@@ -230,6 +249,8 @@ class OnboardingActivity : ComponentActivity() {
         ) == PackageManager.PERMISSION_GRANTED
         permissionsState.update {
             OnboardingPermissionsState(
+                accessibilityGranted = PermissionHelper.hasAccessibilityPermission(this),
+                overlayGranted = PermissionHelper.hasOverlayPermission(this),
                 cameraGranted = hasCamera,
                 usageAccessGranted = PermissionHelper.hasUsageStatsPermission(this),
                 dndPolicyGranted = PermissionHelper.hasNotificationPolicyAccess(this),
@@ -318,6 +339,9 @@ private fun ScrollLockOnboardingTheme(
 @Composable
 fun OnboardingScreen(
     state: OnboardingPermissionsState,
+    onOpenAccessibilitySettings: () -> Unit,
+    onOpenAppInfoForRestrictedSettings: () -> Unit,
+    onOpenOverlaySettings: () -> Unit,
     onRequestCamera: () -> Unit,
     onOpenUsageSettings: () -> Unit,
     onOpenDndSettings: () -> Unit,
@@ -386,9 +410,51 @@ fun OnboardingScreen(
                     modifier = Modifier.padding(top = 4.dp)
                 )
 
-                // Step 1: Camera Permission
+                // Step 1: Accessibility Guard (App Lock & Reels/Shorts Blocker)
                 PermissionGuideCard(
                     stepNumber = "01",
+                    title = stringResource(R.string.perm_accessibility_title),
+                    subtitle = stringResource(R.string.perm_accessibility_desc),
+                    stepsHint = stringResource(R.string.perm_accessibility_steps),
+                    icon = Icons.Rounded.AccessibilityNew,
+                    granted = state.accessibilityGranted,
+                    actionLabel = if (state.accessibilityGranted) {
+                        stringResource(R.string.btn_review_accessibility_settings)
+                    } else {
+                        stringResource(R.string.btn_open_accessibility_settings)
+                    },
+                    isSystemDeepLink = true,
+                    buttonTestTag = "btn_open_accessibility_settings",
+                    cardTestTag = "card_perm_accessibility",
+                    onActionClick = onOpenAccessibilitySettings,
+                    secondaryActionLabel = if (!state.accessibilityGranted) {
+                        "Open App Info (Unlock Restricted Setting)"
+                    } else null,
+                    onSecondaryActionClick = onOpenAppInfoForRestrictedSettings
+                )
+
+                // Step 2: Display Over Other Apps
+                PermissionGuideCard(
+                    stepNumber = "02",
+                    title = stringResource(R.string.perm_overlay_title),
+                    subtitle = stringResource(R.string.perm_overlay_desc),
+                    stepsHint = stringResource(R.string.perm_overlay_steps),
+                    icon = Icons.Outlined.Layers,
+                    granted = state.overlayGranted,
+                    actionLabel = if (state.overlayGranted) {
+                        stringResource(R.string.btn_review_overlay_settings)
+                    } else {
+                        stringResource(R.string.btn_open_overlay_settings)
+                    },
+                    isSystemDeepLink = true,
+                    buttonTestTag = "btn_open_overlay_settings",
+                    cardTestTag = "card_perm_overlay",
+                    onActionClick = onOpenOverlaySettings
+                )
+
+                // Step 3: Camera Permission
+                PermissionGuideCard(
+                    stepNumber = "03",
                     title = stringResource(R.string.onboarding_camera_title),
                     subtitle = stringResource(R.string.onboarding_camera_desc),
                     stepsHint = stringResource(R.string.onboarding_camera_steps),
@@ -405,9 +471,9 @@ fun OnboardingScreen(
                     onActionClick = onRequestCamera
                 )
 
-                // Step 2: Usage Access Permission
+                // Step 4: Usage Access Permission
                 PermissionGuideCard(
-                    stepNumber = "02",
+                    stepNumber = "04",
                     title = stringResource(R.string.perm_usage_title),
                     subtitle = stringResource(R.string.perm_usage_desc),
                     stepsHint = stringResource(R.string.perm_usage_steps),
@@ -424,9 +490,9 @@ fun OnboardingScreen(
                     onActionClick = onOpenUsageSettings
                 )
 
-                // Step 3: Deep Focus Do Not Disturb Policy Access
+                // Step 5: Deep Focus Do Not Disturb Policy Access
                 PermissionGuideCard(
-                    stepNumber = "03",
+                    stepNumber = "05",
                     title = stringResource(R.string.perm_dnd_title),
                     subtitle = stringResource(R.string.perm_dnd_desc),
                     stepsHint = stringResource(R.string.perm_dnd_steps),
@@ -536,7 +602,7 @@ private fun OnboardingHeroCard(
                             color = colors.onSurface
                         )
                         Text(
-                            text = "${state.coreGrantedCount} / 3",
+                            text = "${state.coreGrantedCount} / 5",
                             fontFamily = JetBrainsMonoFamily,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
@@ -571,7 +637,9 @@ private fun PermissionGuideCard(
     isSystemDeepLink: Boolean,
     buttonTestTag: String,
     cardTestTag: String,
-    onActionClick: () -> Unit
+    onActionClick: () -> Unit,
+    secondaryActionLabel: String? = null,
+    onSecondaryActionClick: (() -> Unit)? = null
 ) {
     val colors = MaterialTheme.colorScheme
     var showGuide by remember { mutableStateOf(!granted) }
@@ -773,6 +841,21 @@ private fun PermissionGuideCard(
                         },
                         contentDescription = null,
                         modifier = Modifier.size(17.dp)
+                    )
+                }
+            }
+
+            if (secondaryActionLabel != null && onSecondaryActionClick != null) {
+                TextButton(
+                    onClick = onSecondaryActionClick,
+                    modifier = Modifier.fillMaxWidth().minimumInteractiveComponentSize()
+                ) {
+                    Text(
+                        text = secondaryActionLabel,
+                        fontFamily = InterFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = colors.secondary
                     )
                 }
             }

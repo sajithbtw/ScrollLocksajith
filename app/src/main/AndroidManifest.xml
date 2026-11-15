@@ -27,6 +27,9 @@
     <!-- Do Not Disturb Policy Access to hide notification previews during Deep Focus -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
+    <!-- Overlay window permission so the lock gate pops over distracted apps immediately -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <!-- Compliant package visibility for launchable installed apps (Android 11+) -->
     <queries>
         <intent>
@@ -141,6 +144,34 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="User-initiated focus session countdown timer and UsageStats distraction nudge monitor" />
+        </service>
+
+        <!-- Accessibility Guard Service (Instant App Lock & Reels/Shorts Exit) -->
+        <service
+            android:name="com.sajith.scrolllock.service.ScrollLockAccessibilityService"
+            android:exported="false"
+            android:label="@string/accessibility_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!-- Local On-Device Deep Focus Firewall VPN Service (Zero remote servers) -->
+        <service
+            android:name="com.sajith.scrolllock.service.DeepFocusVpnService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Local-only on-device packet sinkhole restricting distracting app internet access during user-initiated Deep Focus sessions" />
         </service>
 
     </application>

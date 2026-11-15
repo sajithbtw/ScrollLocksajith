@@ -86,6 +86,7 @@ fun FocusGlassScreen(
     onToggleHidePreviews: (Boolean) -> Unit,
     onToggleBlockInternet: (Boolean) -> Unit,
     onGrantDndAccess: () -> Unit,
+    onGrantVpnConsent: () -> Unit,
     onOpenConnectivityPanel: () -> Unit,
     onOpenDataSaver: () -> Unit,
     onToggleDeepFocusException: (String) -> Unit,
@@ -292,76 +293,94 @@ fun FocusGlassScreen(
                             style = MaterialTheme.typography.titleMedium,
                             color = GlassColors.TextPrimary
                         )
-                        Text(
-                            text = "Hides notification previews via official DND Policy & shields non-essential internet apps.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = GlassColors.TextSecondary
-                        )
-                    }
-                    Switch(
-                        checked = state.deepFocusEnabled,
-                        onCheckedChange = onToggleDeepFocus,
-                        colors = SwitchDefaults.colors(checkedTrackColor = GlassColors.VioletPrimary),
-                        modifier = Modifier.testTag("deep_focus_master_switch")
-                    )
-                }
-
-                DeepFocusToggleRow(
-                    title = "Hide Notification Previews",
-                    icon = Icons.Rounded.DoNotDisturbOn,
-                    checked = state.deepFocusHidePreviews,
-                    onCheckedChange = onToggleHidePreviews
-                )
-                DeepFocusToggleRow(
-                    title = "Offline & Non-Essential Net Shield",
-                    icon = Icons.Rounded.Public,
-                    checked = state.deepFocusBlockInternet,
-                    onCheckedChange = onToggleBlockInternet
-                )
-
                 Text(
-                    text = "Shielding ${state.deepFocusShieldedPreviewCount} non-essential apps • Calls, SMS & Alarms stay active",
+                    text = "Hides notification previews via DND Policy & blocks non-essential app internet with an on-device firewall.",
                     style = MaterialTheme.typography.labelSmall,
-                    color = GlassColors.CyanAccent
+                    color = GlassColors.TextSecondary
                 )
+            }
+            Switch(
+                checked = state.deepFocusEnabled,
+                onCheckedChange = onToggleDeepFocus,
+                colors = SwitchDefaults.colors(checkedTrackColor = GlassColors.VioletPrimary),
+                modifier = Modifier.testTag("deep_focus_master_switch")
+            )
+        }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = onGrantDndAccess,
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(
-                            1.dp,
-                            if (state.hasDndAccess) GlassColors.MintVerified.copy(alpha = 0.5f) else GlassColors.AmberAlarm
-                        ),
-                        contentPadding = PaddingValues(horizontal = 10.dp),
-                        modifier = Modifier.weight(1f).height(46.dp)
-                    ) {
-                        Text(
-                            text = if (state.hasDndAccess) "DND Ready ✓" else "Grant DND Access",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (state.hasDndAccess) GlassColors.MintVerified else GlassColors.AmberAlarm,
-                            maxLines = 1
-                        )
-                    }
+        DeepFocusToggleRow(
+            title = "Hide Notification Previews",
+            icon = Icons.Rounded.DoNotDisturbOn,
+            checked = state.deepFocusHidePreviews,
+            onCheckedChange = onToggleHidePreviews
+        )
+        DeepFocusToggleRow(
+            title = "Local Net Firewall (VPN Shield)",
+            icon = Icons.Rounded.Public,
+            checked = state.deepFocusBlockInternet,
+            onCheckedChange = onToggleBlockInternet
+        )
 
-                    OutlinedButton(
-                        onClick = { showExceptionsDialog = true },
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, GlassColors.GlassBorder),
-                        contentPadding = PaddingValues(horizontal = 10.dp),
-                        modifier = Modifier.weight(1f).height(46.dp)
-                    ) {
-                        Text(
-                            text = "Exceptions (${state.deepFocusAllowedCount})",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = GlassColors.TextPrimary,
-                            maxLines = 1
-                        )
-                    }
-                }
+        Text(
+            text = "Blocking ${state.deepFocusShieldedPreviewCount} non-essential apps • Calls, SMS & Alarms stay online",
+            style = MaterialTheme.typography.labelSmall,
+            color = GlassColors.CyanAccent
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(
+                onClick = onGrantDndAccess,
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(
+                    1.dp,
+                    if (state.hasDndAccess) GlassColors.MintVerified.copy(alpha = 0.5f) else GlassColors.AmberAlarm
+                ),
+                contentPadding = PaddingValues(horizontal = 10.dp),
+                modifier = Modifier.weight(1f).height(46.dp)
+            ) {
+                Text(
+                    text = if (state.hasDndAccess) "DND Ready ✓" else "Grant DND Access",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (state.hasDndAccess) GlassColors.MintVerified else GlassColors.AmberAlarm,
+                    maxLines = 1
+                )
+            }
+
+            OutlinedButton(
+                onClick = onGrantVpnConsent,
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(
+                    1.dp,
+                    if (state.hasVpnConsent) GlassColors.MintVerified.copy(alpha = 0.5f) else GlassColors.AmberAlarm
+                ),
+                contentPadding = PaddingValues(horizontal = 10.dp),
+                modifier = Modifier.weight(1f).height(46.dp).testTag("deep_focus_vpn_consent_btn")
+            ) {
+                Text(
+                    text = if (state.hasVpnConsent) "VPN Shield Ready ✓" else "Enable VPN Shield",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (state.hasVpnConsent) GlassColors.MintVerified else GlassColors.AmberAlarm,
+                    maxLines = 1
+                )
+            }
+        }
+
+        OutlinedButton(
+            onClick = { showExceptionsDialog = true },
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, GlassColors.GlassBorder),
+            contentPadding = PaddingValues(horizontal = 10.dp),
+            modifier = Modifier.fillMaxWidth().height(46.dp)
+        ) {
+            Text(
+                text = "Exceptions (${state.deepFocusAllowedCount} allowed online)",
+                style = MaterialTheme.typography.labelMedium,
+                color = GlassColors.TextPrimary,
+                maxLines = 1
+            )
+        }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

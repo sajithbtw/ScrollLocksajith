@@ -143,7 +143,7 @@ public class DeepFocusAndPlayProtectTest {
     }
 
     @Test
-    public void manifest_compliesWithGooglePlayProtectRestrictions() throws Exception {
+    public void manifest_declaresAccessibilityAndVpnSafelyWithoutProhibitedPermissions() throws Exception {
         Context context = ApplicationProvider.getApplicationContext();
         PackageManager pm = context.getPackageManager();
         PackageInfo pkgInfo = pm.getPackageInfo(
@@ -151,22 +151,27 @@ public class DeepFocusAndPlayProtectTest {
                 PackageManager.GET_PERMISSIONS | PackageManager.GET_SERVICES
         );
 
-        if (pkgInfo.requestedPermissions != null) {
-            Set<String> perms = new HashSet<>(Arrays.asList(pkgInfo.requestedPermissions));
-            assertFalse(perms.contains("android.permission.BIND_ACCESSIBILITY_SERVICE"));
-            assertFalse(perms.contains("android.permission.BIND_VPN_SERVICE"));
-            assertFalse(perms.contains("android.permission.QUERY_ALL_PACKAGES"));
-            assertFalse(perms.contains("android.permission.SYSTEM_ALERT_WINDOW"));
-            assertFalse(perms.contains("android.permission.REQUEST_INSTALL_PACKAGES"));
-        }
+        assertTrue(pkgInfo.requestedPermissions != null);
+        Set<String> perms = new HashSet<>(Arrays.asList(pkgInfo.requestedPermissions));
+        assertTrue(perms.contains("android.permission.SYSTEM_ALERT_WINDOW"));
+        assertFalse(perms.contains("android.permission.QUERY_ALL_PACKAGES"));
+        assertFalse(perms.contains("android.permission.REQUEST_INSTALL_PACKAGES"));
+        assertFalse(perms.contains("android.permission.USE_EXACT_ALARM"));
+        assertFalse(perms.contains("android.permission.SCHEDULE_EXACT_ALARM"));
 
+        boolean hasAccessibilityService = false;
+        boolean hasVpnService = false;
         if (pkgInfo.services != null) {
             for (android.content.pm.ServiceInfo si : pkgInfo.services) {
-                assertFalse("Should not declare AccessibilityService permission",
-                        "android.permission.BIND_ACCESSIBILITY_SERVICE".equals(si.permission));
-                assertFalse("Should not declare VpnService permission",
-                        "android.permission.BIND_VPN_SERVICE".equals(si.permission));
+                if ("android.permission.BIND_ACCESSIBILITY_SERVICE".equals(si.permission)) {
+                    hasAccessibilityService = true;
+                }
+                if ("android.permission.BIND_VPN_SERVICE".equals(si.permission)) {
+                    hasVpnService = true;
+                }
             }
         }
+        assertTrue("ScrollLockAccessibilityService should be registered", hasAccessibilityService);
+        assertTrue("DeepFocusVpnService should be registered", hasVpnService);
     }
 }

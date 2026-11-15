@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.net.VpnService;
 import android.os.Build;
 import android.os.PowerManager;
 import android.os.Process;
@@ -14,10 +15,15 @@ import android.provider.Settings;
 
 import androidx.core.content.ContextCompat;
 
+import com.sajith.scrolllock.service.ScrollLockAccessibilityService;
+
 /**
- * Play-Protect-compliant permission & official Android Settings panel launcher.
- * Relies strictly on standard Android Digital Wellbeing, Notification, DND Policy,
- * Connectivity Panel, and runtime Camera/Audio APIs—zero Accessibility or VpnService hooks.
+ * Permission & official Android Settings panel launcher for ScrollLock:
+ * - Accessibility Guard (App Lock & Reels/Shorts feed exit)
+ * - Display Over Other Apps (reliable lock overlay popup)
+ * - Usage Access & Do Not Disturb Policy Access
+ * - Local Deep Focus VPN preparation
+ * - Runtime Camera, Audio & Notification permissions
  */
 public final class PermissionHelper {
 
@@ -219,6 +225,78 @@ public final class PermissionHelper {
                 context.startActivity(new Intent(Settings.ACTION_SETTINGS)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             }
+        }
+    }
+
+    /**
+     * Checks whether ScrollLock's Accessibility Guard is enabled by the user.
+     */
+    public static boolean hasAccessibilityPermission(Context context) {
+        return ScrollLockAccessibilityService.isEnabledInSettings(context);
+    }
+
+    /**
+     * Opens Android Accessibility Settings so the user can toggle ScrollLock App & Reels Guard.
+     */
+    public static void openAccessibilitySettings(Context context) {
+        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            context.startActivity(intent);
+        } catch (Exception e) {
+            Intent fallback = new Intent(Settings.ACTION_SETTINGS);
+            fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(fallback);
+        }
+    }
+
+    /**
+     * Checks whether Display Over Other Apps (SYSTEM_ALERT_WINDOW) is granted.
+     */
+    public static boolean hasOverlayPermission(Context context) {
+        return Settings.canDrawOverlays(context);
+    }
+
+    /**
+     * Opens Android Display Over Other Apps settings for ScrollLock.
+     */
+    public static void openOverlaySettings(Context context) {
+        Intent targeted = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+        targeted.setData(Uri.fromParts("package", context.getPackageName(), null));
+        targeted.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            context.startActivity(targeted);
+            return;
+        } catch (Exception ignored) {
+        }
+        Intent fallback = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+        fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            context.startActivity(fallback);
+        } catch (Exception e) {
+            openAppDetailsSettings(context);
+        }
+    }
+
+    /**
+     * Checks whether the system VPN profile has already been authorized for Deep Focus Firewall.
+     */
+    public static boolean isVpnPrepared(Context context) {
+        try {
+            return VpnService.prepare(context) == null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Returns an Intent to request VPN consent from the OS if not yet granted, or null if ready.
+     */
+    public static Intent prepareVpnIntent(Context context) {
+        try {
+            return VpnService.prepare(context);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

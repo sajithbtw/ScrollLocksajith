@@ -151,6 +151,18 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    private val vpnPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            sessionManager.syncDeepFocusWithState()
+            Toast.makeText(this, "Deep Focus local VPN firewall ready.", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "VPN permission needed for Deep Focus internet blocking.", Toast.LENGTH_SHORT).show()
+        }
+        refreshAllState()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -208,6 +220,9 @@ class MainActivity : FragmentActivity() {
                     onFocusReset = { sessionManager.resetSession() },
                     onToggleDeepFocus = { enabled ->
                         prefs.setDeepFocusEnabled(enabled)
+                        if (enabled) {
+                            requestDeepFocusVpnIfNeeded()
+                        }
                         sessionManager.syncDeepFocusWithState()
                         refreshAllState()
                     },
@@ -218,15 +233,20 @@ class MainActivity : FragmentActivity() {
                     },
                     onToggleBlockInternet = { enabled ->
                         prefs.setDeepFocusBlockInternetEnabled(enabled)
+                        if (enabled) {
+                            requestDeepFocusVpnIfNeeded()
+                        }
                         sessionManager.syncDeepFocusWithState()
                         refreshAllState()
                     },
                     onGrantDndAccess = { PermissionHelper.openNotificationPolicySettings(this) },
+                    onGrantVpnConsent = { requestVpnConsentExplicitly() },
                     onOpenConnectivityPanel = { PermissionHelper.openInternetConnectivityPanel(this) },
                     onOpenDataSaver = { PermissionHelper.openDataSaverSettings(this) },
                     onToggleDeepFocusException = { pkg ->
                         prefs.toggleDeepFocusAllowedPackage(pkg)
                         deepFocusAllowedState.value = prefs.getDeepFocusAllowedPackages()
+                        sessionManager.syncDeepFocusWithState()
                         refreshAllState()
                     },
                     isSocialOrGame = { pkg -> appRepo.isSocialOrGamePackage(pkg) },
@@ -262,6 +282,8 @@ class MainActivity : FragmentActivity() {
                     onToggleAlwaysGuard = { prefs.setAlwaysGuardAppsEnabled(it); refreshAllState() },
                     onToggleWorkoutUnlock = { prefs.setWorkoutUnlockEnabled(it); refreshAllState() },
                     onOpenUsageSettings = { PermissionHelper.openUsageAccessSettings(this) },
+                    onOpenAccessibilitySettings = { PermissionHelper.openAccessibilitySettings(this) },
+                    onOpenOverlaySettings = { PermissionHelper.openOverlaySettings(this) },
                     onOpenDndSettings = { PermissionHelper.openNotificationPolicySettings(this) },
                     onOpenNotificationSettings = { requestOrOpenNotificationSettings() },
                     onOpenAppSettings = { PermissionHelper.openAppDetailsSettings(this) },
@@ -359,6 +381,9 @@ class MainActivity : FragmentActivity() {
                 selectedAppsCount = selectedPkgs.size,
                 shortFormBlockedCount = shortFormPkgs.size,
                 hasUsageAccess = PermissionHelper.hasUsageStatsPermission(this),
+                hasAccessibility = PermissionHelper.hasAccessibilityPermission(this),
+                hasOverlay = PermissionHelper.hasOverlayPermission(this),
+                hasVpnConsent = PermissionHelper.isVpnPrepared(this),
                 hasDndAccess = PermissionHelper.hasNotificationPolicyAccess(this),
                 hasCameraPerm = PermissionHelper.hasCameraPermission(this),
                 hasNotificationPerm = PermissionHelper.hasNotificationPermission(this),
@@ -590,6 +615,7 @@ class MainActivity : FragmentActivity() {
             FocusState.PAUSED -> sessionManager.resumeSession()
             FocusState.IDLE, FocusState.COMPLETED -> {
                 ensureNotificationPermissionIfNeeded()
+                requestDeepFocusVpnIfNeeded()
                 val durationMin = ((sessionManager.currentTotalMillisValue + 59_999L) / 60_000L).toInt().coerceAtLeast(1)
                 sessionManager.startNewSession(durationMin)
             }
@@ -602,6 +628,9 @@ class MainActivity : FragmentActivity() {
         if (checked) {
             if (selected.add(app.packageName)) {
                 dbHelper.recordAppSelected(app.packageName, app.appName)
+            }
+            if (!PermissionHelper.hasAccessibilityPermission(this)) {
+                Toast.makeText(this, "App locked! Enable Accessibility Guard so ScrollLock blocks it live.", Toast.LENGTH_SHORT).show()
             }
         } else {
             selected.remove(app.packageName)
@@ -617,8 +646,8 @@ class MainActivity : FragmentActivity() {
 
     private fun toggleAppReels(app: AppItem) {
         val blockedNow = prefs.toggleShortFormPackage(app.packageName)
-        if (blockedNow && (!PermissionHelper.hasUsageStatsPermission(this) || !PermissionHelper.hasNotificationPermission(this))) {
-            Toast.makeText(this, R.string.toast_enable_usage_for_reels, Toast.LENGTH_SHORT).show()
+        if (blockedNow && !PermissionHelper.hasAccessibilityPermission(this)) {
+            Toast.makeText(this, R.string.toast_enable_usage_for_reels, Toast.LENGTH_LONG).show()
         }
         val updatedList = uiState.value.installedApps.map {
             if (it.packageName == app.packageName) {
@@ -682,6 +711,26 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    private fun requestDeepFocusVpnIfNeeded() {
+        if (!prefs.isDeepFocusEnabled() || !prefs.isDeepFocusBlockInternetEnabled()) {
+            return
+        }
+        val prepareIntent = PermissionHelper.prepareVpnIntent(this)
+        if (prepareIntent != null) {
+            vpnPermissionLauncher.launch(prepareIntent)
+        }
+    }
+
+    private fun requestVpnConsentExplicitly() {
+        val prepareIntent = PermissionHelper.prepareVpnIntent(this)
+        if (prepareIntent != null) {
+            vpnPermissionLauncher.launch(prepareIntent)
+        } else {
+            Toast.makeText(this, "Deep Focus local VPN shield is already authorized.", Toast.LENGTH_SHORT).show()
+            refreshAllState()
+        }
+    }
+
     private fun requestOrOpenNotificationSettings() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             !PermissionHelper.hasNotificationPermission(this)
@@ -718,6 +767,7 @@ private fun ScrollLockShell(
     onToggleHidePreviews: (Boolean) -> Unit,
     onToggleBlockInternet: (Boolean) -> Unit,
     onGrantDndAccess: () -> Unit,
+    onGrantVpnConsent: () -> Unit,
     onOpenConnectivityPanel: () -> Unit,
     onOpenDataSaver: () -> Unit,
     onToggleDeepFocusException: (String) -> Unit,
@@ -739,6 +789,8 @@ private fun ScrollLockShell(
     onToggleAlwaysGuard: (Boolean) -> Unit,
     onToggleWorkoutUnlock: (Boolean) -> Unit,
     onOpenUsageSettings: () -> Unit,
+    onOpenAccessibilitySettings: () -> Unit,
+    onOpenOverlaySettings: () -> Unit,
     onOpenDndSettings: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     onOpenAppSettings: () -> Unit,
@@ -833,6 +885,7 @@ private fun ScrollLockShell(
                                     onToggleHidePreviews = onToggleHidePreviews,
                                     onToggleBlockInternet = onToggleBlockInternet,
                                     onGrantDndAccess = onGrantDndAccess,
+                                    onGrantVpnConsent = onGrantVpnConsent,
                                     onOpenConnectivityPanel = onOpenConnectivityPanel,
                                     onOpenDataSaver = onOpenDataSaver,
                                     onToggleDeepFocusException = onToggleDeepFocusException,
@@ -847,7 +900,9 @@ private fun ScrollLockShell(
                                     onToggleAppGuard = onToggleAppGuard,
                                     onToggleAppReels = onToggleAppReels,
                                     onPresetBlockReels = onPresetBlockReels,
-                                    onPresetGuardSocial = onPresetGuardSocial
+                                    onPresetGuardSocial = onPresetGuardSocial,
+                                    onOpenAccessibilitySettings = onOpenAccessibilitySettings,
+                                    onOpenOverlaySettings = onOpenOverlaySettings
                                 )
                                 MainTab.INSIGHTS -> InsightsGlassScreen(
                                     state = state,
@@ -866,6 +921,8 @@ private fun ScrollLockShell(
                                     onToggleAlwaysGuard = onToggleAlwaysGuard,
                                     onToggleWorkoutUnlock = onToggleWorkoutUnlock,
                                     onOpenUsageSettings = onOpenUsageSettings,
+                                    onOpenAccessibilitySettings = onOpenAccessibilitySettings,
+                                    onOpenOverlaySettings = onOpenOverlaySettings,
                                     onOpenDndSettings = onOpenDndSettings,
                                     onOpenNotificationSettings = onOpenNotificationSettings,
                                     onOpenAppSettings = onOpenAppSettings,

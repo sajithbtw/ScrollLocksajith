@@ -47,15 +47,23 @@ public final class DeepFocusController {
         } else {
             restoreDndIfSaved(appContext, prefs);
         }
+
+        if (prefs.isDeepFocusBlockInternetEnabled()) {
+            DeepFocusVpnService.startOrUpdate(appContext);
+        } else {
+            DeepFocusVpnService.stop(appContext);
+        }
     }
 
     /**
-     * Immediately restores notification previews (prior DND policy) and clears Deep Focus active flag.
+     * Immediately restores notification previews (prior DND policy), stops the local firewall,
+     * and clears the Deep Focus active flag.
      */
     public static synchronized void disengage(Context context) {
         Context appContext = context.getApplicationContext();
         PreferencesManager prefs = new PreferencesManager(appContext);
 
+        DeepFocusVpnService.stop(appContext);
         restoreDndIfSaved(appContext, prefs);
         prefs.setDeepFocusRuntimeActive(false);
     }

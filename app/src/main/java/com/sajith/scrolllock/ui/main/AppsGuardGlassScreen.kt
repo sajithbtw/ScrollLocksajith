@@ -29,6 +29,9 @@ import androidx.compose.material.icons.rounded.Android
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.PlayDisabled
 import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.WarningAmber
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -71,6 +74,8 @@ fun AppsGuardGlassScreen(
     onToggleAppReels: (AppItem) -> Unit,
     onPresetBlockReels: () -> Unit,
     onPresetGuardSocial: () -> Unit,
+    onOpenAccessibilitySettings: () -> Unit,
+    onOpenOverlaySettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val filteredApps = remember(state.installedApps, filterMode, state.searchQuery) {
@@ -102,10 +107,66 @@ fun AppsGuardGlassScreen(
                     color = GlassColors.TextPrimary
                 )
                 Text(
-                    text = "Toggle \"No Reels\" to guard short-form feeds, or flip the switch for Focus Lock & Workout-to-Unlock.",
+                    text = "Toggle \"No Reels\" to lock short-form feeds (while keeping Feeds & DMs working), or flip the switch for Focus & Workout App Lock.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = GlassColors.TextSecondary
                 )
+            }
+        }
+
+        if (!state.hasAccessibility || !state.hasOverlay) {
+            item {
+                GlassCard(highlighted = true, cornerRadius = 18.dp) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Rounded.WarningAmber, null, tint = GlassColors.AmberAlarm, modifier = Modifier.size(18.dp))
+                            Text(
+                                text = if (!state.hasAccessibility) "Enable Accessibility Guard to Block" else "Enable Overlay for Instant Popups",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = GlassColors.AmberAlarm
+                            )
+                        }
+                        Text(
+                            text = if (!state.hasAccessibility) {
+                                "Turn on ScrollLock in Accessibility Settings so Reels & guarded apps actually lock immediately (not just show notifications)."
+                            } else {
+                                "Allow Display Over Other Apps so ScrollLock pops the lock screen cleanly over any distracting app."
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GlassColors.TextSecondary
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                            if (!state.hasAccessibility) {
+                                Button(
+                                    onClick = onOpenAccessibilitySettings,
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = GlassColors.VioletPrimary),
+                                    contentPadding = PaddingValues(horizontal = 12.dp),
+                                    modifier = Modifier.weight(1f).height(44.dp).testTag("apps_enable_accessibility_btn")
+                                ) {
+                                    Text("Enable Accessibility", maxLines = 1)
+                                }
+                            }
+                            if (!state.hasOverlay) {
+                                OutlinedButton(
+                                    onClick = onOpenOverlaySettings,
+                                    shape = RoundedCornerShape(12.dp),
+                                    border = BorderStroke(1.dp, GlassColors.AmberAlarm),
+                                    contentPadding = PaddingValues(horizontal = 12.dp),
+                                    modifier = Modifier.weight(1f).height(44.dp).testTag("apps_enable_overlay_btn")
+                                ) {
+                                    Text("Allow Overlay", color = GlassColors.AmberAlarm, maxLines = 1)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

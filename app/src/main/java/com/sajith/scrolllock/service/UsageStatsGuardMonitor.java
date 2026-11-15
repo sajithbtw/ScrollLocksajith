@@ -161,6 +161,9 @@ public final class UsageStatsGuardMonitor {
         }
 
         long elapsed = SystemClock.elapsedRealtime();
+        if (ScrollLockAccessibilityService.wasGateLaunchedRecently(3500L)) {
+            return;
+        }
         if (latestPkg.equals(lastAlertPkg) && (elapsed - lastAlertElapsedMs) < ALERT_COOLDOWN_MS) {
             return;
         }
@@ -170,6 +173,29 @@ public final class UsageStatsGuardMonitor {
         String appLabel = new AppRepository(context).getAppLabel(latestPkg);
         sessionManager.incrementSessionInterruption(latestPkg, appLabel);
         postGuardAlertNotification(context, latestPkg, appLabel, alertType);
+
+        if ((alertType == GuardAlertType.APP_LOCK || alertType == GuardAlertType.SHORT_FORM)
+                && PermissionHelper.hasOverlayPermission(context)) {
+            Intent gateIntent = new Intent(context, FocusInterruptionActivity.class);
+            gateIntent.putExtra(FocusInterruptionActivity.EXTRA_BLOCKED_PKG, latestPkg);
+            gateIntent.putExtra(FocusInterruptionActivity.EXTRA_BLOCKED_APP_NAME, appLabel);
+            gateIntent.putExtra(
+                    FocusInterruptionActivity.EXTRA_BLOCK_MODE,
+                    alertType == GuardAlertType.SHORT_FORM
+                            ? FocusInterruptionActivity.MODE_SHORT_FORM
+                            : FocusInterruptionActivity.MODE_APP_LOCK
+            );
+            gateIntent.putExtra(FocusInterruptionActivity.EXTRA_BLOCK_SURFACE, appLabel + " Reels/Shorts");
+            gateIntent.addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                            | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            | Intent.FLAG_ACTIVITY_SINGLE_TOP
+            );
+            try {
+                context.startActivity(gateIntent);
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     private static void postGuardAlertNotification(

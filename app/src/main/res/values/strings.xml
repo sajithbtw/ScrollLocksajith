@@ -63,7 +63,7 @@
     <string name="btn_block_reels_preset">Guard Reels &amp; Shorts</string>
     <string name="cd_toggle_short_form">Toggle Reels and Shorts guard for this app</string>
     <string name="cd_toggle_full_app_lock">Toggle full app lock</string>
-    <string name="toast_enable_usage_for_reels">Reels guard saved! Enable Usage Access &amp; Notifications in Settings to alert live during Focus.</string>
+    <string name="toast_enable_usage_for_reels">Reels guard saved! Enable Accessibility Guard in Settings so ScrollLock auto-exits Reels live.</string>
 
     <!-- Focus Session & Deep Focus -->
     <string name="focus_title">Focus Session</string>
@@ -116,12 +116,12 @@
     <string name="interruption_reminder">You chose to break the scroll and stay present. Complete a quick workout set to unlock temporarily, or return cleanly.</string>
     <string name="btn_return_to_focus">Return to Focus Session</string>
     <string name="btn_open_dashboard">Go to Dashboard</string>
-    <string name="interruption_limitation_note">Triggered by user-approved Digital Wellbeing &amp; Workout Unlock Gate (strictly on-device).</string>
+    <string name="interruption_limitation_note">Triggered on-device by ScrollLock App Lock &amp; Workout Unlock Gate.</string>
     <string name="interruption_short_form_badge">REELS &amp; SHORTS GUARD</string>
-    <string name="interruption_short_form_title">Short-Form Feed Guarded</string>
-    <string name="interruption_short_form_paused_format">%s is guarded by ScrollLock during Focus.</string>
-    <string name="interruption_short_form_reminder">Reels and Shorts feeds stay guarded to protect your attention. Complete a quick set to earn temporary time, or return cleanly.</string>
-    <string name="interruption_short_form_note">Detected via Play-safe Usage Access guard (strictly on-device).</string>
+    <string name="interruption_short_form_title">Short-Form Feed Blocked</string>
+    <string name="interruption_short_form_paused_format">%s is blocked by ScrollLock so your regular Feed and DMs stay distraction-free.</string>
+    <string name="interruption_short_form_reminder">Reels and Shorts feeds are locked to protect your focus. Complete a quick workout set to earn temporary time, or return cleanly.</string>
+    <string name="interruption_short_form_note">Detected strictly on-device by ScrollLock Short-Form Guard (no passwords or messages are read).</string>
 
     <!-- Guard Notification Channels & Alerts -->
     <string name="notif_channel_guard_name">Distraction Guard Alerts</string>
@@ -207,12 +207,12 @@
     <string name="btn_grant_camera">Allow Camera</string>
     <string name="btn_open_app_settings">Open App Settings</string>
     <string name="onboarding_title">Setup ScrollLock Guard</string>
-    <string name="onboarding_subtitle">Enable these Play-safe permissions so ScrollLock can count workouts on-device, hide previews in Deep Focus, and nudge you out of distractions.</string>
+    <string name="onboarding_subtitle">Enable these permissions so ScrollLock can block Reels/Shorts instantly, lock distracting apps, track AI workouts on-device, and silence previews during Deep Focus.</string>
     <string name="btn_onboarding_done">Continue to ScrollLock</string>
     <string name="filter_social_games">Social &amp; Games</string>
     <string name="btn_guard_social_games">Guard Social &amp; Games</string>
     <string name="btn_permissions_guide">Permissions Setup Guide</string>
-    <string name="onboarding_section_core">Core System Permissions</string>
+    <string name="onboarding_section_core">Core Blocking &amp; AI Permissions</string>
     <string name="onboarding_readiness_label">Setup Progress</string>
     <string name="onboarding_all_ready">All Core Permissions Ready</string>
     <string name="onboarding_camera_title">Camera (On-Device Pose AI)</string>
@@ -228,10 +228,26 @@
     <string name="onboarding_quick_guard_empty">One-tap auto-protect social, gaming, and short-form video apps.</string>
     <string name="onboarding_quick_guard_status_format">Guarded: %1$d apps • Reels Blocked: %2$d apps</string>
     <string name="onboarding_battery_title">Background Reliability (Optional)</string>
-    <string name="onboarding_battery_desc">Tap to open Battery Optimization settings so timers stay accurate.</string>
+    <string name="onboarding_battery_desc">Tap to open Battery Optimization settings so timers and guards stay reliable.</string>
     <string name="onboarding_battery_granted">Unrestricted background reliability active</string>
     <string name="btn_onboarding_continue_later">Continue Setup Later</string>
-    <string name="onboarding_privacy_footer">Play-Protect Safe • 100% On-Device Privacy</string>
+    <string name="onboarding_privacy_footer">100% On-Device Processing • Zero Data Sent</string>
+
+    <!-- Accessibility, Overlay & Local Deep Focus VPN -->
+    <string name="accessibility_service_label">ScrollLock App &amp; Reels Guard</string>
+    <string name="accessibility_service_description">Detects when you open a selected locked app or enter short-form Reels/Shorts feeds (such as Instagram Reels or YouTube Shorts) to exit them and show your Workout-to-Unlock screen. Strictly skips all password fields, reads zero messages, and never sends data off your device.</string>
+    <string name="perm_accessibility_title">Accessibility Guard (App &amp; Reels Blocker)</string>
+    <string name="perm_accessibility_desc">Prominent Disclosure: ScrollLock inspects only UI tab/player IDs inside apps you explicitly choose in order to block Reels/Shorts (while keeping regular Feeds &amp; DMs working) and trigger App Lock. Passwords, messages, and keystrokes are never read, stored, or sent off your device.</string>
+    <string name="perm_accessibility_steps">1. Tap Open Accessibility Settings -> Downloaded Apps -> ScrollLock -> Toggle ON.\n2. Android 13+ sideloaded APK tip: If the toggle says "Restricted setting", tap App Info below -> top-right ⋮ menu -> "Allow restricted settings", then return and turn ScrollLock ON.</string>
+    <string name="btn_open_accessibility_settings">Open Accessibility Settings</string>
+    <string name="btn_review_accessibility_settings">Review Accessibility Settings</string>
+    <string name="perm_overlay_title">Display Over Other Apps (Instant Lock Screen)</string>
+    <string name="perm_overlay_desc">Allows ScrollLock to pop up the full-screen Pause / Workout-to-Unlock gate cleanly on top of any distracted app across all Android OEMs.</string>
+    <string name="perm_overlay_steps">Tap Open Overlay Settings -> Select ScrollLock -> Allow display over other apps.</string>
+    <string name="btn_open_overlay_settings">Open Overlay Settings</string>
+    <string name="btn_review_overlay_settings">Review Overlay Settings</string>
+    <string name="deep_focus_vpn_notif_title">Deep Focus Firewall Active</string>
+    <string name="deep_focus_vpn_notif_body">Non-essential internet apps are offline on-device. Calls, SMS &amp; Alarms stay active.</string>
 
     <!-- Tasks, Alarms & Study Page Counter -->
     <string name="nav_tasks">Tasks</string>

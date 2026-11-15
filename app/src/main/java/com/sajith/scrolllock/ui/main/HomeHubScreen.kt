@@ -728,9 +728,10 @@ fun RightTelemetryColumn(
                         color = GlassColors.VioletBright
                     )
                 }
-                ShieldChecklistRow("Usage App Guard", Icons.Rounded.Shield, state.hasUsageAccess)
+                ShieldChecklistRow("App & Reels Accessibility", Icons.Rounded.Lock, state.hasAccessibility)
+                ShieldChecklistRow("Display Over Other Apps", Icons.Rounded.Shield, state.hasOverlay)
+                ShieldChecklistRow("Usage App Monitor", Icons.Rounded.Shield, state.hasUsageAccess)
                 ShieldChecklistRow("DND Hide Previews", Icons.Rounded.DoNotDisturbOn, state.hasDndAccess)
-                ShieldChecklistRow("Reels & Shorts Lock", Icons.Rounded.Lock, state.shortFormBlockedCount > 0)
                 ShieldChecklistRow("Page & Pose Camera", Icons.Rounded.CameraAlt, state.hasCameraPerm)
             }
         }
